@@ -12,18 +12,22 @@ public class CameraManager : MonoBehaviour
 
     private Camera cam;
 
+    public int compteurMaxObjets;
+
     void Start()
     {
         cam = Camera.main;
+        compteurMaxObjets = 10;
     }
 
     void Update()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0) && compteurMaxObjets > 0)
         {
-            Debug.Log("Clic");
             Vector3 wordPos = cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, zPosition));
             Instantiate(objectPrefab, wordPos, Quaternion.identity);
+            compteurMaxObjets--;
+            Debug.Log("Compteur d'objets restants : " + compteurMaxObjets);
         }
     }
 
