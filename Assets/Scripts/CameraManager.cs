@@ -1,36 +1,112 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class CameraManager : MonoBehaviour
 {
 
     //Source: http://www.unity3d-france.com/unity/phpBB3/viewtopic.php?t=16239
 
-    [SerializeField] private GameObject objectPrefab;
-    [SerializeField] private float zPosition;
-
+    //Permet de récupérer les infos de la caméra
     private Camera cam;
 
+    //Permet de gérer la profondeur de spawn
+    [SerializeField] private float zPosition;
+
+    //Détermine quel objet va être instancié à chaque clic
+    [SerializeField] private GameObject objectPrefab;
+
+    //Permet de limiter le nombre d'objets à l'écran
     public int compteurMaxObjets;
+
+    public int indexListeObjets;
+
+    //Tableau permettant de stocker les clones du prefab choisi
+    private List<GameObject> tableauPrefabs = new List<GameObject>();
+
+    //Pour afficher certaines données à l'écran
+    [SerializeField] private TextMeshProUGUI nombreObjetsMax;
+    [SerializeField] private TextMeshProUGUI indexObjets;
 
     void Start()
     {
+        //Initialisation de la caméra
         cam = Camera.main;
+
+        //Initialisation du compteur max d'objets
         compteurMaxObjets = 10;
+
+        indexListeObjets = 0;
     }
 
     void Update()
     {
-        if (Input.GetMouseButtonDown(0) && compteurMaxObjets > 0)
+        if (Input.GetMouseButtonDown(0))
         {
-            Vector3 wordPos = cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, zPosition));
-            Instantiate(objectPrefab, wordPos, Quaternion.identity);
-            compteurMaxObjets--;
-            Debug.Log("Compteur d'objets restants : " + compteurMaxObjets);
+            if(compteurMaxObjets > 0)
+            {
+                InstancierDesGameObjectsEtLesMettreDansUneListe();
+            }
+            else if (compteurMaxObjets == 0)
+            {
+                if (indexListeObjets <= 9)
+                {
+                    InstancierLesGameObjetsDeLaListe();
+                }
+                else 
+                {
+                    indexListeObjets = 0;
+                    InstancierLesGameObjetsDeLaListe();
+                }
+                
+            }
+
         }
     }
 
+    void InstancierDesGameObjectsEtLesMettreDansUneListe()
+    {
+        //On récupère les coordonnées du pointeur via la caméra
+        Vector3 wordPos = cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, zPosition));
+
+        //On instancie le gameobject à l'emplacement du pointeur, et à la profondeur voulue
+        var item = (Instantiate(objectPrefab, wordPos, Quaternion.identity));
+
+        //Décrémentation du compteur à chaque nouvelle instanciation
+        compteurMaxObjets--;
+        //Debug.Log("Compteur d'objets restants : " + compteurMaxObjets);
+        nombreObjetsMax.text = "Compteur d'objets restants : " + compteurMaxObjets;
+
+        //On insère le gameobject instancié dans la liste
+        tableauPrefabs.Add(item);
+
+        //Lister les cubes déjà présents dans la liste à chaque clic
+
+        int index = -1; //Point de départ de l'indexation, à -1 pour avoir un premier résultat à 0
+        foreach (GameObject element in tableauPrefabs)
+        {
+            index++;
+            //Debug.Log(element.name + " " + index);
+            indexObjets.text = "Index du dernier objet créé : " + index;
+        }
+    }
+
+    void InstancierLesGameObjetsDeLaListe()
+    {
+        Vector3 wordPos = cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, zPosition));
+
+        Instantiate(tableauPrefabs[indexListeObjets], wordPos, Quaternion.identity);
+
+        indexObjets.text = "Index du nouvel objet créé : " + indexListeObjets;
+
+        indexListeObjets++;
+    }
+
+    //Object Pooling : https://learn.unity.com/tutorial/introduction-to-object-pooling#
+    //Gamedev.guru : https://thegamedev.guru/unity-cpu-performance/object-pooling/
+
+    //Cette fonction provient du Scripting Reference de Unity
     void OnGUI()
     {
         Vector3 point = new Vector3();
